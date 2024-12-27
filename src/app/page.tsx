@@ -23,12 +23,12 @@ async function getContractData() {
       )
     );
 
-    console.log(contractResponses)
-
     const contractBalances = await Promise.all(
       contractResponses.map(async (response, index) => {
         try {
           const data = await response.json();
+
+          console.log(data)
           return {
             ...contracts[index],
             balance: Number(data.result || '0') / 1e18
