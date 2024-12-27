@@ -33,7 +33,7 @@ async function getContractData() {
       contracts.map(contract =>
         fetch(
           `https://api.bscscan.com/api?module=account&action=tokenbalance&contractaddress=${process.env.CONTRACT_ADDRESS}&address=${contract.address}&tag=latest&apikey=${process.env.BSC_API_KEY}`,
-          { next: { revalidate: 3600 } }
+          { next: { revalidate: 3600, tags: [contract.address] } }
         )
       )
     );
