@@ -7,6 +7,7 @@ import { contracts } from "@/lib/contracts";
 const MaxSupply = parseInt(process.env.MAX_SUPPLY || "1000000000");
 
 async function getContractData() {
+  "use cache"
   try {
     const totalSupply = await getTotalSupply();
 

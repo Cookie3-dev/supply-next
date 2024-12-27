@@ -1,6 +1,8 @@
 export const MaxSupply = parseInt(process.env.MAX_SUPPLY || "1000000000");
 
 export async function getTotalSupply() {
+  "use cache";
+
   try {
     const [bscResponse, baseResponse] = await Promise.all([
       fetch(
@@ -30,6 +32,7 @@ export async function getTotalSupply() {
 
     const bscTotal = BigInt(bscData.result);
     const baseTotal = BigInt(baseData.result);
+
     const totalSupply = Number(bscTotal + baseTotal) / 1e18;
 
     return totalSupply;
