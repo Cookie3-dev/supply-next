@@ -23,6 +23,8 @@ async function getContractData() {
       )
     );
 
+    console.log(contractResponses)
+
     const contractBalances = await Promise.all(
       contractResponses.map(async (response, index) => {
         try {
