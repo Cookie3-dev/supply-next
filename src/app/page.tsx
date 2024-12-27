@@ -1,31 +1,15 @@
 // app/page.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getTotalSupply } from "@/lib/api";
 import { contracts } from "@/lib/contracts";
 
 const MaxSupply = parseInt(process.env.MAX_SUPPLY || "1000000000");
 
 async function getContractData() {
   try {
-    const [bscResponse, baseResponse] = await Promise.all([
-      fetch(
-        `https://api.bscscan.com/api?module=stats&action=tokensupply&contractaddress=${process.env.CONTRACT_ADDRESS}&apikey=${process.env.BSC_API_KEY}`,
-        { next: { revalidate: 3600 } }
-      ),
-      fetch(
-        `https://api.basescan.org/api?module=stats&action=tokensupply&contractaddress=${process.env.CONTRACT_ADDRESS}&apikey=${process.env.BASE_API_KEY}`,
-        { next: { revalidate: 3600 } }
-      ),
-    ]);
+    const totalSupply = await getTotalSupply();
 
-    const [bscData, baseData] = await Promise.all([
-      bscResponse.json(),
-      baseResponse.json(),
-    ]);
-
-    const bscTotal = BigInt(bscData.result || '0');
-    const baseTotal = BigInt(baseData.result || '0');
-    const totalSupply = Number(bscTotal + baseTotal) / 1e18;
     const burntTokens = MaxSupply - totalSupply;
     const circulatingSupply = MaxSupply - burntTokens;
 
