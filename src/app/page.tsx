@@ -1,101 +1,147 @@
-import Image from "next/image";
+// app/page.tsx
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { contracts } from "@/lib/contracts";
 
-export default function Home() {
+const MaxSupply = parseInt(process.env.MAX_SUPPLY || "1000000000");
+
+async function getContractData() {
+  try {
+    const [bscResponse, baseResponse] = await Promise.all([
+      fetch(
+        `https://api.bscscan.com/api?module=stats&action=tokensupply&contractaddress=${process.env.CONTRACT_ADDRESS}&apikey=${process.env.BSC_API_KEY}`,
+        { next: { revalidate: 3600 } }
+      ),
+      fetch(
+        `https://api.basescan.org/api?module=stats&action=tokensupply&contractaddress=${process.env.CONTRACT_ADDRESS}&apikey=${process.env.BASE_API_KEY}`,
+        { next: { revalidate: 3600 } }
+      ),
+    ]);
+
+    const [bscData, baseData] = await Promise.all([
+      bscResponse.json(),
+      baseResponse.json(),
+    ]);
+
+    const bscTotal = BigInt(bscData.result || '0');
+    const baseTotal = BigInt(baseData.result || '0');
+    const totalSupply = Number(bscTotal + baseTotal) / 1e18;
+    const burntTokens = MaxSupply - totalSupply;
+    const circulatingSupply = MaxSupply - burntTokens;
+
+    const contractResponses = await Promise.all(
+      contracts.map(contract =>
+        fetch(
+          `https://api.bscscan.com/api?module=account&action=tokenbalance&contractaddress=${process.env.CONTRACT_ADDRESS}&address=${contract.address}&tag=latest&apikey=${process.env.BSC_API_KEY}`,
+          { next: { revalidate: 3600 } }
+        )
+      )
+    );
+
+    const contractBalances = await Promise.all(
+      contractResponses.map(async (response, index) => {
+        try {
+          const data = await response.json();
+          return {
+            ...contracts[index],
+            balance: Number(data.result || '0') / 1e18
+          };
+        } catch (e) {
+          console.error("Error fetching contract balance:", e);
+          return {
+            ...contracts[index],
+            balance: 0
+          };
+        }
+      })
+    );
+
+    return {
+      totalSupply,
+      burntTokens,
+      circulatingSupply,
+      contractBalances
+    };
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return {
+      totalSupply: MaxSupply,
+      burntTokens: 0,
+      circulatingSupply: MaxSupply,
+      contractBalances: contracts.map(contract => ({ ...contract, balance: 0 }))
+    };
+  }
+}
+export default async function Home() {
+  const { burntTokens, circulatingSupply, contractBalances } = await getContractData();
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">COOKIE Circulating Supply Tracker</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Supply</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl">{MaxSupply.toLocaleString()}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Burnt COOKIE</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl">{burntTokens.toLocaleString()}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Circulating Supply</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl">{circulatingSupply.toLocaleString()}</p>
+          </CardContent>
+        </Card>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Contract Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Contract Address</TableHead>
+                <TableHead>Balance (COOKIE)</TableHead>
+                <TableHead>Chain</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Name</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {contractBalances.map((contract) => (
+                <TableRow key={contract.address}>
+                  <TableCell>
+                    <a
+                      href={`https://bscscan.com/token/${process.env.CONTRACT_ADDRESS}?a=${contract.address}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {contract.address}
+                    </a>
+                  </TableCell>
+                  <TableCell>{contract.balance.toLocaleString()}</TableCell>
+                  <TableCell>{contract.chain}</TableCell>
+                  <TableCell>{contract.type}</TableCell>
+                  <TableCell>{contract.wallet}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
