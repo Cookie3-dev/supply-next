@@ -70,20 +70,21 @@ async function getContractData() {
 export async function GET() {
   try {
     const { totalSupply, contractBalances } = await getContractData();
+    const baseTotal = Number(totalSupply.baseTotal) / 1e18;
+    const bscTotal = Number(totalSupply.bscTotal) / 1e18;
 
     await db.stats.update({
       where: {
         id: 1,
       },
       data: {
-        baseTotal: totalSupply.baseTotal,
-        bscTotal: totalSupply.bscTotal,
+        baseTotal,
+        bscTotal,
       },
     });
 
     await db.contract.createMany({
       data: contractBalances,
-      skipDuplicates: true,
     });
 
     return NextResponse.json({ success: true });

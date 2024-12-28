@@ -19,7 +19,7 @@ model Contract {
 }
 
 model Stats {
-  id        Int    @id @default(autoincrement())
-  baseTotal BigInt
-  bscTotal  BigInt
+  id        Int   @id @default(autoincrement())
+  baseTotal Float
+  bscTotal  Float
 }
