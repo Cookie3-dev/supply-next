@@ -1,3 +1,5 @@
+import { db } from "./db";
+
 export const MaxSupply = parseInt(process.env.MAX_SUPPLY || "1000000000");
 
 export async function getTotalSupply() {
@@ -34,6 +36,29 @@ export async function getTotalSupply() {
     return {
       bscTotal,
       baseTotal,
+    };
+  } catch (error) {
+    console.error("Error fetching total supply:", error);
+    return {
+      bscTotal: BigInt(0),
+      baseTotal: BigInt(0),
+    };
+  }
+}
+
+export async function getSupplyStats() {
+  try {
+    const stats = await db.stats.findFirstOrThrow();
+
+    const totalSupply = stats.baseTotal + stats.bscTotal;
+
+    const circulatingSupply = totalSupply;
+    const burntAmount = MaxSupply - circulatingSupply;
+
+    return {
+      totalSupply,
+      burntAmount,
+      circulatingSupply,
     };
   } catch (error) {
     console.error("Error fetching total supply:", error);

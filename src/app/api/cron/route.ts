@@ -83,6 +83,8 @@ export async function GET() {
       },
     });
 
+    await db.contract.deleteMany();
+
     await db.contract.createMany({
       data: contractBalances,
     });

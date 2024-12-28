@@ -1,17 +1,16 @@
-// app/page.tsx
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getTotalSupply } from "@/lib/api";
-import { contracts } from "@/lib/contracts";
-
-// const MaxSupply = parseInt(process.env.MAX_SUPPLY || "1000000000");
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { TableHeader, TableRow, TableHead, TableBody, TableCell, Table } from "@/components/ui/table";
+import { getSupplyStats, MaxSupply } from "@/lib/api";
+import { db } from "@/lib/db";
 
 export default async function Home() {
-  // const { burntTokens, circulatingSupply, contractBalances } = await getContractData();
+  const data = await getSupplyStats();
+
+  const contractBalances = await db.contract.findMany()
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">COOKIE Circulating Supply Tracker</h1>
-      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Total Supply</CardTitle>
@@ -25,7 +24,7 @@ export default async function Home() {
             <CardTitle>Burnt COOKIE</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl">{burntTokens.toLocaleString()}</p>
+            <p className="text-2xl">{data.burntAmount.toLocaleString()}</p>
           </CardContent>
         </Card>
         <Card>
@@ -33,7 +32,7 @@ export default async function Home() {
             <CardTitle>Circulating Supply</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl">{circulatingSupply.toLocaleString()}</p>
+            <p className="text-2xl">{data.circulatingSupply.toLocaleString()}</p>
           </CardContent>
         </Card>
       </div>
@@ -53,8 +52,8 @@ export default async function Home() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {contractBalances.map((contract) => (
-                <TableRow key={contract.address}>
+              {contractBalances.sort((a, b) => b.balance - a.balance).map((contract, index) => (
+                <TableRow key={index}>
                   <TableCell>
                     <a
                       href={`https://bscscan.com/token/${process.env.CONTRACT_ADDRESS}?a=${contract.address}`}
@@ -74,7 +73,7 @@ export default async function Home() {
             </TableBody>
           </Table>
         </CardContent>
-      </Card> */}
+      </Card>
     </div>
   );
 }
