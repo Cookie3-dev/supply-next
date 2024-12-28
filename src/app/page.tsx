@@ -8,7 +8,6 @@ import { contracts } from "@/lib/contracts";
 
 export default async function Home() {
   // const { burntTokens, circulatingSupply, contractBalances } = await getContractData();
-
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">COOKIE Circulating Supply Tracker</h1>
