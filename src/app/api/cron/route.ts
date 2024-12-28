@@ -67,10 +67,6 @@ async function getContractData() {
   }
 }
 
-export const runtime = "edge";
-export const preferredRegion = "auto";
-export const dynamic = "force-dynamic";
-
 export async function GET() {
   try {
     const { totalSupply, contractBalances } = await getContractData();
