@@ -31,11 +31,15 @@ export async function getTotalSupply() {
     const bscTotal = BigInt(bscData.result);
     const baseTotal = BigInt(baseData.result);
 
-    const totalSupply = Number(bscTotal + baseTotal) / 1e18;
-
-    return totalSupply;
+    return {
+      bscTotal,
+      baseTotal,
+    };
   } catch (error) {
     console.error("Error fetching total supply:", error);
-    return MaxSupply;
+    return {
+      bscTotal: BigInt(0),
+      baseTotal: BigInt(0),
+    };
   }
 }
