@@ -33,7 +33,17 @@ export async function getTotalSupply() {
     const bscTotal = BigInt(bscData.result);
     const baseTotal = BigInt(baseData.result);
 
+    const bscTotalNumber = Number(bscTotal) / 1e18;
+    const baseTotalNumber = Number(baseTotal) / 1e18;
+    const totalSupply = bscTotalNumber + baseTotalNumber;
+
+    // Calculate burned and circulating
+    const burntTokens = MaxSupply - totalSupply;
+    const circulatingSupply = totalSupply;
+
     return {
+      burntTokens,
+      circulatingSupply,
       bscTotal,
       baseTotal,
     };
@@ -52,8 +62,8 @@ export async function getSupplyStats() {
 
     const totalSupply = stats.baseTotal + stats.bscTotal;
 
-    const circulatingSupply = totalSupply;
-    const burntAmount = MaxSupply - circulatingSupply;
+    const circulatingSupply = stats.circulatingTokens;
+    const burntAmount = stats.burntTokens;
 
     return {
       totalSupply,

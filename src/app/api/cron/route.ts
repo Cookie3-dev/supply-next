@@ -6,10 +6,6 @@ import { NextResponse } from "next/server";
 async function getContractData() {
   try {
     const totalSupply = await getTotalSupply();
-    const totalSupplySum =
-      Number(totalSupply.bscTotal + totalSupply.baseTotal) / 1e18;
-    const burntTokens = MaxSupply - totalSupplySum;
-    const circulatingSupply = MaxSupply - burntTokens;
 
     const delay = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms));
@@ -49,9 +45,9 @@ async function getContractData() {
 
     return {
       totalSupply,
-      burntTokens,
-      circulatingSupply,
       contractBalances,
+      circulatingSupply: totalSupply.circulatingSupply,
+      burntTokens: totalSupply.burntTokens,
     };
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -69,7 +65,8 @@ async function getContractData() {
 
 export async function GET() {
   try {
-    const { totalSupply, contractBalances } = await getContractData();
+    const { totalSupply, contractBalances, circulatingSupply, burntTokens } =
+      await getContractData();
     const baseTotal = Number(totalSupply.baseTotal) / 1e18;
     const bscTotal = Number(totalSupply.bscTotal) / 1e18;
 
@@ -80,6 +77,8 @@ export async function GET() {
       data: {
         baseTotal,
         bscTotal,
+        circulatingTokens: circulatingSupply,
+        burntTokens,
       },
     });
 
